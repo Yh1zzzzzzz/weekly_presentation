@@ -1,0 +1,23 @@
+\frametitle{方法改进：跨模态注意力机制}
+
+    \textbf{1. 数学定义:}
+    为了增强图像区域 $\vx$ 和文本 Token $\vt$ 的交互，计算如下相似度：
+
+    \begin{equation}
+        Attention(Q, K, V) = \softmax\left(\frac{Q K^T}{\sqrt{d_k}}\right) V
+    \end{equation}
+
+    \textbf{2. PyTorch 实现片段:}
+    \begin{lstlisting}
+# 定义 Cross-Attention 层
+class CrossAttention(nn.Module):
+    def forward(self, img_feat, text_feat):
+        # img_feat: [Batch, Img_Seq, Dim]
+        # text_feat: [Batch, Txt_Seq, Dim]
+
+        q = self.query(text_feat)
+        k = self.key(img_feat)
+
+        attn_output, _ = self.mha(q, k, k)
+        return attn_output
+    \end{lstlisting}
