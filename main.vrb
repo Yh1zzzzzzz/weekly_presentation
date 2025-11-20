@@ -2,10 +2,9 @@
 
     \textbf{1. 数学定义:}
     为了增强图像区域 $\vx$ 和文本 Token $\vt$ 的交互，计算如下相似度：
-
-    \begin{equation}
-        Attention(Q, K, V) = \softmax\left(\frac{Q K^T}{\sqrt{d_k}}\right) V
-    \end{equation}
+   \[
+%    Attention(Q, K, V) = \softmax\left(\frac{Q K^T}{\sqrt{d_k}}\right) V
+    \]
 
     \textbf{2. PyTorch 实现片段:}
     \begin{lstlisting}

@@ -1,0 +1,246 @@
+\documentclass[aspectratio=169, 10pt]{beamer} 
+% aspectratio=169: 16:9 宽屏
+% 10pt: 字体大小
+
+% ==================================================
+% 1. 中文支持与基础宏包
+% ==================================================
+\usepackage[UTF8]{ctex}     % 核心：支持中文
+\usepackage{graphicx}       % 图片
+\usepackage{booktabs}       % 表格
+\usepackage{amsmath,amssymb}% 数学公式
+\usepackage{subcaption}     % 子图
+\usepackage{listings}       % 代码块
+\usepackage{xcolor}         % 颜色
+\usepackage{tikz}           % 绘图
+
+% ==================================================
+% 2. 主题与导航栏设置 (关键修改)
+% ==================================================
+% 基础主题：Madrid (底部有作者、日期、页码)
+\usetheme{Madrid}           
+% 配色方案：Beaver (灰红色系，适合学术)
+\usecolortheme{beaver}      
+
+% 【核心修改】顶部导航栏设置
+% miniframes: 在顶部显示目录结构和小圆点进度
+% subsection=false: 不显示子小节，只显示大章节，保持顶部简洁
+\useoutertheme[subsection=false]{miniframes} 
+
+% 稍微调整顶部颜色，使其更清晰
+\setbeamercolor{section in head/foot}{fg=white, bg=darkgray}
+
+% ==================================================
+% 3. 代码块样式设置 (Python风格)
+% ==================================================
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize, % 如果代码中文乱码，尝试改成 \small
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=Python,
+    escapeinside=`` % 允许在代码块里写中文注释（如需）
+}
+\lstset{style=pystyle}
+
+% ==================================================
+% 4. 自定义数学符号
+% ==================================================
+\newcommand{\vx}{\mathbf{x}}         % 图像向量
+\newcommand{\vt}{\mathbf{t}}         % 文本向量
+\newcommand{\Lcal}{\mathcal{L}}      % Loss
+
+% ==================================================
+% 5. 封面信息
+% ==================================================
+\title[每周汇报 Week 5]{每周科研进度汇报} % [底部显示的短标题]{封面长标题}
+\subtitle{方向：多模态大模型与视觉对齐} 
+\author[你的名字]{张三 (Your Name)} 
+\institute[xx实验室]{人工智能与多模态实验室}
+\date{\today}
+
+% ==================================================
+% 正文开始
+% ==================================================
+\begin{document}
+
+% --- 封面 ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% --- 目录页 (可选，因为顶部已经有导航了，这页可以删掉) ---
+\begin{frame}{本次汇报目录}
+    \tableofcontents
+\end{frame}
+
+% ==================================================
+% Section 1: 核心摘要
+% ==================================================
+\section{核心摘要} % 这个标题会显示在顶部导航栏
+\begin{frame}{核心摘要 (Executive Summary)}
+    \begin{itemize}
+        \setlength\itemsep{1em}
+        \item \textbf{本周重点 (Key Achievements):} 
+            \begin{itemize}
+                \item 复现了 \textit{LLaVA} 的多模态对齐模块。
+                \item 调试通了 Flickr30k 数据集的预处理代码。
+            \end{itemize}
+        
+        \item \textbf{关键数据 (Highlight):} 
+            \begin{itemize}
+                \item 在小样本测试中，图文匹配准确率提升了 \textcolor{red}{2.1\%}。
+                \item 训练显存占用优化，从 24GB 降至 16GB。
+            \end{itemize}
+            
+        \item \textbf{当前状态:} \textcolor{green!60!black}{\textbf{正常推进 (On Track)}} 
+    \end{itemize}
+\end{frame}
+
+% ==================================================
+% Section 2: 文献阅读
+% ==================================================
+\section{文献阅读}
+\begin{frame}{文献阅读: [论文标题]}
+    \framesubtitle{发表于: CVPR 2024 | 机构: OpenAI/Google}
+
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \textbf{研究动机 (Motivation):}
+            \begin{itemize}
+                \item 现有的 VLM 在处理细粒度空间关系时表现不佳。
+                \item 提出了一种新的 \textbf{Region-Aware Attention} 机制。
+            \end{itemize}
+            
+            \vspace{0.5cm}
+            \textbf{核心方法 (Method):}
+            \begin{itemize}
+                \item 引入 Bounding Box 作为 Prompt。
+                \item 损失函数设计：
+                $$ \Lcal = \Lcal_{ce} + \lambda \Lcal_{iou} $$
+            \end{itemize}
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                % 请替换为你的图片: \includegraphics[width=\textwidth]{model.png} 
+                \rule{\textwidth}{4cm} % 黑色占位符
+                \caption{论文提出的模型架构图}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+% ==================================================
+% Section 3: 方法改进
+% ==================================================
+\section{方法与改进}
+\begin{frame}[fragile]{方法改进：跨模态注意力机制}
+    % [fragile] 是代码块必须的选项
+    
+    \textbf{1. 数学定义:}
+    为了增强图像区域 $\vx$ 和文本 Token $\vt$ 的交互，计算如下相似度：
+    
+    \begin{equation}
+        Attention(Q, K, V) = \softmax\left(\frac{Q K^T}{\sqrt{d_k}}\right) V
+    \end{equation}
+    
+    \textbf{2. PyTorch 实现片段:}
+    \begin{lstlisting}
+# 定义 Cross-Attention 层
+class CrossAttention(nn.Module):
+    def forward(self, img_feat, text_feat):
+        # img_feat: [Batch, Img_Seq, Dim]
+        # text_feat: [Batch, Txt_Seq, Dim]
+        
+        q = self.query(text_feat)
+        k = self.key(img_feat)
+        
+        attn_output, _ = self.mha(q, k, k)
+        return attn_output
+    \end{lstlisting}
+\end{frame}
+
+% ==================================================
+% Section 4: 实验结果
+% ==================================================
+\section{实验结果}
+\begin{frame}{实验结果：定性分析 (Qualitative)}
+    \textbf{测试 Prompt:} \textit{“一只戴着墨镜的赛博朋克风格猫咪”}
+    
+    \vspace{0.3cm}
+    
+    \begin{figure}
+        \centering
+        % 第一张图
+        \begin{subfigure}{0.3\textwidth}
+            \centering
+            \rule{\linewidth}{2.5cm} % 替换为图片
+            \caption{Baseline}
+        \end{subfigure}%
+        \hspace{0.05\textwidth}
+        % 第二张图
+        \begin{subfigure}{0.3\textwidth}
+            \centering
+            \rule{\linewidth}{2.5cm} % 替换为图片
+            \caption{Ours (改进版)}
+        \end{subfigure}%
+        \hspace{0.05\textwidth}
+        % 第三张图
+        \begin{subfigure}{0.3\textwidth}
+            \centering
+            \rule{\linewidth}{2.5cm} % 替换为图片
+            \caption{Ground Truth}
+        \end{subfigure}
+    \end{figure}
+    
+    \textbf{分析：} 可以看到我们的方法在光影细节（墨镜反射）上比 Baseline 更真实。
+\end{frame}
+
+% ==================================================
+% Section 5: 问题与计划
+% ==================================================
+\section{问题与计划}
+\begin{frame}{当前问题与下周计划}
+    \begin{columns}[T]
+        \begin{column}{0.48\textwidth}
+            \setbeamercolor{block title}{bg=red!80!black,fg=white}
+            \begin{block}{遇到的困难 (Issues)}
+                \begin{enumerate}
+                    \item \textbf{OOM 报错：} 当 Batch Size 大于 32 时显存溢出。
+                    \item \textbf{数据脏乱：} 发现 LAION 数据集中有部分图片链接失效，导致 DataLoader 卡死。
+                \end{enumerate}
+            \end{block}
+        \end{column}
+        
+        \begin{column}{0.48\textwidth}
+            \setbeamercolor{block title}{bg=blue!80!black,fg=white}
+            \begin{block}{下周计划 (Next Steps)}
+                \begin{enumerate}
+                    \item 尝试使用 \texttt{Gradient Checkpointing} 技术节省显存。
+                    \item 增加异常捕获代码，跳过失效图片。
+                    \item 跑完 COCO 数据集的对比实验。
+                \end{enumerate}
+            \end{block}
+        \end{column}
+    \end{columns}

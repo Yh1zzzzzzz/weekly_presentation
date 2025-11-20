@@ -13,6 +13,8 @@
 \usepackage{listings}       % 代码块
 \usepackage{xcolor}         % 颜色
 \usepackage{tikz}           % 绘图
+\newcommand{\autoslidegraphic}[1]{%
+    \includegraphics[width=\linewidth,height=0.7\textheight,keepaspectratio]{#1}}
 
 % ==================================================
 % 2. 主题与导航栏设置 (关键修改)
@@ -20,7 +22,9 @@
 % 基础主题：Madrid (底部有作者、日期、页码)
 \usetheme{Madrid}           
 % 配色方案：Beaver (灰红色系，适合学术)
-\usecolortheme{beaver}      
+\usecolortheme{beaver}    
+\setbeamercolor{structure}{fg=black}           % 所有结构标题（含 frame）用黑色
+\setbeamercolor{frametitle}{fg=black} % 如需额外指定背景，可一起写  
 
 % 【核心修改】顶部导航栏设置
 % miniframes: 在顶部显示目录结构和小圆点进度
@@ -70,10 +74,10 @@
 % ==================================================
 % 5. 封面信息
 % ==================================================
-\title[每周汇报 Week 5]{每周科研进度汇报} % [底部显示的短标题]{封面长标题}
-\subtitle{方向：多模态大模型与视觉对齐} 
-\author[你的名字]{张三 (Your Name)} 
-\institute[xx实验室]{人工智能与多模态实验室}
+\title[每周汇报]{每周进度汇报} % [底部显示的短标题]{封面长标题}
+% \subtitle{方向：多模态大模型与视觉对齐} 
+\author[杨淏天]{杨淏天} 
+% \institute[xx实验室]{实验室}
 \date{\today}
 
 % ==================================================
@@ -86,7 +90,6 @@
     \titlepage
 \end{frame}
 
-% --- 目录页 (可选，因为顶部已经有导航了，这页可以删掉) ---
 \begin{frame}{本次汇报目录}
     \tableofcontents
 \end{frame}
@@ -100,42 +103,34 @@
         \setlength\itemsep{1em}
         \item \textbf{本周重点 (Key Achievements):} 
             \begin{itemize}
-                \item 复现了 \textit{LLaVA} 的多模态对齐模块。
-                \item 调试通了 Flickr30k 数据集的预处理代码。
-            \end{itemize}
-        
-        \item \textbf{关键数据 (Highlight):} 
-            \begin{itemize}
-                \item 在小样本测试中，图文匹配准确率提升了 \textcolor{red}{2.1\%}。
-                \item 训练显存占用优化，从 24GB 降至 16GB。
+                \item 3篇模型微调的论文，均出自一个作者
+                \item IRRA:2023年的SOTA
+                \item UFineBench:一个新的数据集，同时也是第一个使用LLM来做描述增强的数据集
             \end{itemize}
             
-        \item \textbf{当前状态:} \textcolor{green!60!black}{\textbf{正常推进 (On Track)}} 
     \end{itemize}
 \end{frame}
 
 % ==================================================
 % Section 2: 文献阅读
 % ==================================================
-\section{文献阅读}
-\begin{frame}{文献阅读: [论文标题]}
-    \framesubtitle{发表于: CVPR 2024 | 机构: OpenAI/Google}
+\section{CLIP微调}
+\begin{frame}{CSKT：CLIP-based Synergistic Knowledge Transfer for Text-based Person Retrieval}
+    \framesubtitle{发表于: ICASSP 2024}
 
     \begin{columns}[T]
         % 左栏文字
         \begin{column}{0.5\textwidth}
             \textbf{研究动机 (Motivation):}
             \begin{itemize}
-                \item 现有的 VLM 在处理细粒度空间关系时表现不佳。
-                \item 提出了一种新的 \textbf{Region-Aware Attention} 机制。
+                \item 第一篇对CLIP在行人检索任务上进行微调的论文。
             \end{itemize}
             
             \vspace{0.5cm}
             \textbf{核心方法 (Method):}
             \begin{itemize}
-                \item 引入 Bounding Box 作为 Prompt。
-                \item 损失函数设计：
-                $$ \Lcal = \Lcal_{ce} + \lambda \Lcal_{iou} $$
+                \item 1.Adapter对encoder的MLP进行微调。
+                \item 2.Prompt Tuning对transformer各层的Prompt做调整
             \end{itemize}
         \end{column}
         
@@ -143,103 +138,553 @@
         \begin{column}{0.5\textwidth}
             \begin{figure}
                 \centering
-                % 请替换为你的图片: \includegraphics[width=\textwidth]{model.png} 
-                \rule{\textwidth}{4cm} % 黑色占位符
+                \autoslidegraphic{figures/CSKT.png}
                 \caption{论文提出的模型架构图}
             \end{figure}
         \end{column}
     \end{columns}
 \end{frame}
 
-% ==================================================
-% Section 3: 方法改进
-% ==================================================
-\section{方法与改进}
-\begin{frame}[fragile]{方法改进：跨模态注意力机制}
-    % [fragile] 是代码块必须的选项
-    
-    \textbf{1. 数学定义:}
-    为了增强图像区域 $\vx$ 和文本 Token $\vt$ 的交互，计算如下相似度：
-    
-    \begin{equation}
-        Attention(Q, K, V) = \softmax\left(\frac{Q K^T}{\sqrt{d_k}}\right) V
-    \end{equation}
-    
-    \textbf{2. PyTorch 实现片段:}
-    \begin{lstlisting}
-# 定义 Cross-Attention 层
-class CrossAttention(nn.Module):
-    def forward(self, img_feat, text_feat):
-        # img_feat: [Batch, Img_Seq, Dim]
-        # text_feat: [Batch, Txt_Seq, Dim]
-        
-        q = self.query(text_feat)
-        k = self.key(img_feat)
-        
-        attn_output, _ = self.mha(q, k, k)
-        return attn_output
-    \end{lstlisting}
+\begin{frame}{具体的微调算法}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \textbf{MLP微调:}
+            % 调整图片大小，防止溢出下方公式
+            \begin{figure}
+                \centering
+                \includegraphics[width=0.40\linewidth]{figures/adapter.png}
+                \caption{MLP-Adapter的结构图}
+            \end{figure}
+            \begin{itemize}
+                \item 对attention后的MLP做微调
+            \end{itemize}
+            % 将公式移到图片下方，保证显示完整
+            \vspace{0.5em}
+            \[
+                x_{out} = x + x_{MLP} + s \cdot \mathrm{ReLU} \left( \mathrm{LN} (x) \cdot W_d \right) \cdot W_u
+            \]
+        \end{column}
+
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \textbf{Prompt Tuning:}
+            \begin{itemize}
+                \item 对transformer各层的Prompt做调整
+                % 使用 \[ ... \] 比 $$...$$ 安全，无歧义
+                \[
+                  [P_0^t,\; P_0^{v\to t},\; T_0]
+                \]
+                \item $P_0^t$是初始的文本token，对于下一层来说，是前一层的输出。
+                \item $P_0^{v\to t}$是初始的视觉token经过projection后的，
+                \item $T_0$是可学习的文本token。
+                \item 上述三个向量拼接得倒最终送入当前layer做注意力计算的输入
+                % \item 视觉encoder亦然，只是把 $P_0^{v\to t}$替换为 $T_0^{t\to v}$。
+            \end{itemize}
+        \end{column}
+    \end{columns}
 \end{frame}
 
-% ==================================================
-% Section 4: 实验结果
-% ==================================================
-\section{实验结果}
-\begin{frame}{实验结果：定性分析 (Qualitative)}
-    \textbf{测试 Prompt:} \textit{“一只戴着墨镜的赛博朋克风格猫咪”}
-    
-    \vspace{0.3cm}
-    
-    \begin{figure}
-        \centering
-        % 第一张图
-        \begin{subfigure}{0.3\textwidth}
-            \centering
-            \rule{\linewidth}{2.5cm} % 替换为图片
-            \caption{Baseline}
-        \end{subfigure}%
-        \hspace{0.05\textwidth}
-        % 第二张图
-        \begin{subfigure}{0.3\textwidth}
-            \centering
-            \rule{\linewidth}{2.5cm} % 替换为图片
-            \caption{Ours (改进版)}
-        \end{subfigure}%
-        \hspace{0.05\textwidth}
-        % 第三张图
-        \begin{subfigure}{0.3\textwidth}
-            \centering
-            \rule{\linewidth}{2.5cm} % 替换为图片
-            \caption{Ground Truth}
-        \end{subfigure}
-    \end{figure}
-    
-    \textbf{分析：} 可以看到我们的方法在光影细节（墨镜反射）上比 Baseline 更真实。
+\begin{frame}{DM-Adapter: Domain-Aware Mixture-of-Adapters for Text-Based Person Retrieval}
+    \framesubtitle{发表于: AAAI 2025}
+
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \textbf{研究动机 (Motivation):}
+            \begin{itemize}
+                \item 引入LLM中的MOE结构，在推理时选择最合适的两个Adapter进行激活
+            \end{itemize}
+            
+            \vspace{0.5cm}
+            \textbf{核心方法 (Method):}
+            \begin{itemize}
+                \item 引入MOE架构，实现Adapter的动态选择。
+                \item 引入Load-Balance Loss，确保每个Adapter都得到充分训练。
+            \end{itemize}
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/DM-adpter.png}
+                \caption{论文提出的模型架构图}
+            \end{figure}
+        \end{column}
+    \end{columns}
 \end{frame}
+
+\begin{frame}{具体的MOE算法}
+    \begin{itemize}
+        \item \textbf{MOE激活：}
+    \end{itemize}
+    \[
+        y = h_o + \sum_{i=0}^{n-1} \mathrm{Softmax}\left( \mathrm{TopK}\left(x W + p W_d\right)_i \right) \cdot \mathrm{Adapter}_i(x)
+    \]
+    \begin{itemize}
+        \item $h_o$ 是原始的输出。
+        \item $x$ 是输入。
+        \item $W$ 是权重，用于计算每个专家的激活值。
+        \item $p$ 是一个可学习的参数，文中作者称之为“Domain-Aware Prompt”。
+        \item $W_d$ 是门控权重。
+        \item $\mathrm{TopK}$ 用于取激活值最高的专家参与运算。
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{均衡MOE负载}
+    \begin{itemize}
+        \item 在MOE中，我们存在负载不均衡的问题：某些专家大量被激活导致失去MOE的 sparse 特点，退化为 dense 结构。
+    \end{itemize}
+    \begin{itemize}
+        \item \textbf{解决办法：Load-Balance Loss}
+    \end{itemize}
+    \[
+        l_{aux} = \alpha \sum_{i=1}^{n} f_i \cdot p_i
+    \]
+    \begin{itemize}
+        \item $f_i$ 是第 $i$ 个专家处理的 token 比例。
+        \item $p_i$ 是第 $i$ 个专家的平均参数。
+    \end{itemize}
+\end{frame}
+\begin{frame}{UP-Person: Unified Parameter-Efficient Transfer Learning for Text-based Person Retrieval}
+    \framesubtitle{发表于: CAST 2025}
+
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \textbf{研究动机 (Motivation):}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item 引入Lora到CLIP微调中
+                \item 对attention的K、V进行prefix填充
+                \item 改进Adapter以均衡分布
+            \end{itemize}
+            
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/Lora.png}
+                \caption{论文提出的模型架构图}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Lora对Attention权重进行微调}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item \textbf{Lora原理}
+                \[
+                    W_k = W_k + \alpha \cdot W_{\text{loraA}} W_{\text{loraB}}
+                \]
+                \item 其中 $W_k$ 是用于计算 $K$ 的 projection 矩阵
+                \item 由于 $W_{\text{loraA}}$ 和 $W_{\text{loraB}}$ 的秩远远小于 $W_k$，我们可以实现高效的微调
+            \end{itemize}
+            
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/lora_math.png}
+                \caption{Lora原理}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{改进Adapter}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \textbf{研究动机 (Motivation):}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item 之前：并行 Adapter: \[output = x + MLP(x) + Adapter(x)\] 
+                \item 现在：合并到输入\[output = x + MLP(x + Adapter(x))\] 
+            \end{itemize}
+            
+            \begin{itemize}
+                \item \textbf{为什么要这么做}
+                \item 作者认为传统 Adapter 位于 Attention 层容易与 LoRA/Prefix 产生结构重叠，将其移至 LayerNorm 层实现了空间解耦，有效消除了组件间的优化干扰。
+            \end{itemize}
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/L-adapter.png}
+                \caption{论文提出的模型架构图}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{S-Prefix}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \textbf{研究动机 (Motivation):}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item 在文本和视觉Transformer的每一层的Key和Value中引入可学习的前缀Token。
+                \item K = [$P_k$ : K] $P_K$是prefix，K是原始的Key，二者拼接。
+                \item V = [$P_v$ : V] $P_V$是prefix，V是原始的Value，二者拼接。
+                \item 我个人的理解是注入行人检索特定的先验知识
+            \end{itemize}
+            
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/s_prefix.png}
+                \caption{论文提出的模型架构图}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+% ==================================================
+% Section 3: IRRA
+% ==================================================
+\section{IRRA}
+\begin{frame}{Cross-Modal Implicit Relation Reasoning and Aligning for Text-to-Image Person Retrieval}
+    \framesubtitle{发表于: CVPR 2023}
+
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \textbf{核心贡献:}
+            \begin{itemize}
+                \item 引入了cross attention，实现图像区域和文本token的细粒度交互
+                \item 引入了Masked Langua Model(MLM),随机MASK token后做预测，提升模型的理解能力
+                \item 引入了Similarity Distribution Match(SDM)，改进了InfoNCE loss
+            \end{itemize}
+            
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/IRRA.png}
+                \caption{论文提出的模型架构图}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Cross Attention}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item 把经过视觉encoder的图像区域特征 $f_{vision}$ 和文本encoder的文本Token特征 $f_{text}$ 进行cross attention计算
+                \item 文本特征作为Query，图像区域特征作为Key和Value
+                \item 计算得到的注意力特征 $f_{mask}$ 送入到下面会提到的Masked Language Model 
+            \end{itemize}
+            
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/cross_atten.png}
+                \caption{Cross Attention}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Masked Language Model}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \vspace{0.5cm}
+                        \begin{itemize}
+                                \item 我们会以15\%的概率随机MASK掉文本Token，然后利用cross attention计算得到的 $f_{mask}$ 来预测被MASK掉的Token
+                                \item 这样可以提升模型对文本的理解能力，理解图像的含义，作者称之为 Implicit Relation Reasoning (IRR)
+                                \item 作者提出 IRR loss：\[
+\mathcal{L}_{irr}
+= - \frac{1}{|\mathcal{M}|\,|\mathcal{V}|}
+    \sum_{i \in \mathcal{M}}
+    \sum_{j \in |\mathcal{V}|}
+    y_j^i \log
+    \frac{\exp(m_j^i)}{\sum_{k=1}^{|\mathcal{V}|} \exp(m_k^i)} \, .
+\] 
+                        \end{itemize}
+            
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/cross_atten.png}
+                \caption{Cross Attention}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Similarituy Distribution Matching}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item 传统的 InfoNCE loss 只关注正样本和负样本。在CLIP预训练中图文是一一对应的，但行人检索里一个图像对应多个文本描述，InfoNCE loss 无法刻画这种一对多关系。
+                \item 我们把相似度转换为概率分布，用 KL 散度拉近模型给出的分布与真实分布：
+\[
+KL(\mathbf{p_i} \parallel \mathbf{q_i}) = \frac{1}{N} \sum_{i=1}^{N} \sum_{j=1}^{N} p_{i,j} \log\left(\frac{p_{i,j}}{q_{i,j} + \epsilon}\right)
+\]
+            \end{itemize}
+            
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/SDM.png}
+                \caption{Cross Attention}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\section{UFineBench}
+\begin{frame}{UFineBench: Towards Text-based Person Retrieval with Ultra-fine Granularity}
+    \framesubtitle{发表于: CVPR 2024}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \textbf{核心贡献:}
+            \begin{itemize}
+                \item 提出了一个全新的行人检索训练集，提供更加细粒度、描述更加丰富的文本描述
+                \item 提出了一个综合性的评测基准，首次使用LLM来对数据集描述做改写增强
+                \item 提出了一种新的评估指标,优于mAP 、 rank@k
+                \item 提出一种基于decoder的细粒度对齐方法
+            \end{itemize}
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/UFineBench.png}
+                \caption{UFineBench 框架图}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{UFine6926}
+   \frametitle{新的数据集:UFine6926}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item 人工标注的全新数据集，平均每段描述用了80个词，远高于CUHK-PEDS(27个)
+                \item 使用对比实验证明了在这个数据集上训练的模型rank@k, mAP等指标均有显著提升
+            \end{itemize}
+            
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/UFine6926.png}
+                \caption{UFine6926 数据集效果}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{UFine3C}
+   \frametitle{新的验证集:UFine3C}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item 提供了不同分辨率、亮度、背景、场景的人物图片
+                \item 借助LLM(Qwen llama)来对描述进行改写，提供不同风格，不同粒度的文本描述
+            \end{itemize}
+            
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/UFine3C.png}
+                \caption{UFine6926 数据集效果}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{}
+   \frametitle{新的评价指标：mSD（mean similarity distribution）}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item 右图所示的情况，三组相似度不同，但是rank@k,mAP得出的结果不同
+                \item 说明mAP与rank@k不能很好的捕捉到正负样本之间的相对值大小带来的差异
+                \item 即[100(正) 99(负)] 和 [100(正) 0（负）]显然后者是更好的相似度
+            \end{itemize}
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/MSD.png}
+                \caption{UFine6926 数据集效果}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{}
+   \frametitle{使用decoder实现的细粒度对齐}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item 人们常常使用「CLS」token放在图片patch的首部，取这个token的hidden来作为我们的图像信息
+                \item 相似的：    「EOS」token放在文本末尾，作为文本信息的总结。
+                \item 但是在计算相似度的过程中，其余的token的信息完全不会被用到
+            \end{itemize}
+        \end{column}
+        
+        % 右栏图片
+    \end{columns}
+\end{frame}
+
+\begin{frame}{}
+   \frametitle{使用decoder实现的细粒度对齐}
+    \begin{columns}[T]
+        % 左栏文字
+        \begin{column}{0.5\textwidth}
+            \vspace{0.5cm}
+            \begin{itemize}
+                \item 训练公共的decoder和一个公共的 Query向量，来做完整的图文embedding对齐
+                \item 即：把图文的完整embedding，分别和这个公共Query送入decoder，得倒新的图、文特征表达
+                \item 用这个新的图、文特征来做对齐
+            \end{itemize}
+        \end{column}
+        
+        % 右栏图片
+        \begin{column}{0.5\textwidth}
+            \begin{figure}
+                \centering
+                \autoslidegraphic{figures/UFine_decoder.png}
+                \caption{UFine6926 数据集效果}
+            \end{figure}
+        \end{column}
+    \end{columns}
+\end{frame}
+
+
+% \section{方法与改进}
+% \begin{frame}[fragile]{方法改进：跨模态注意力机制}
+%     % [fragile] 是代码块必须的选项
+    
+%     \textbf{1. 数学定义:}
+%     为了增强图像区域 $\vx$ 和文本 Token $\vt$ 的交互，计算如下相似度：
+%    \[        
+% %    Attention(Q, K, V) = \softmax\left(\frac{Q K^T}{\sqrt{d_k}}\right) V
+%     \] 
+    
+%     \textbf{2. PyTorch 实现片段:}
+%     \begin{lstlisting}
+% # 定义 Cross-Attention 层
+% class CrossAttention(nn.Module):
+%     def forward(self, img_feat, text_feat):
+%         # img_feat: [Batch, Img_Seq, Dim]
+%         # text_feat: [Batch, Txt_Seq, Dim]
+        
+%         q = self.query(text_feat)
+%         k = self.key(img_feat)
+        
+%         attn_output, _ = self.mha(q, k, k)
+%         return attn_output
+%     \end{lstlisting}
+% \end{frame}
+
+% % ==================================================
+% % Section 4: 实验结果
+% % ==================================================
+% \section{实验结果}
+% \begin{frame}{实验结果：定性分析 (Qualitative)}
+%     \textbf{测试 Prompt:} \textit{“一只戴着墨镜的赛博朋克风格猫咪”}
+    
+%     \vspace{0.3cm}
+    
+%     \begin{figure}
+%         \centering
+%         % 第一张图
+%         \begin{subfigure}{0.3\textwidth}
+%             \centering
+%             \rule{\linewidth}{2.5cm} % 替换为图片
+%             \caption{Baseline}
+%         \end{subfigure}%
+%         \hspace{0.05\textwidth}
+%         % 第二张图
+%         \begin{subfigure}{0.3\textwidth}
+%             \centering
+%             \rule{\linewidth}{2.5cm} % 替换为图片
+%             \caption{Ours (改进版)}
+%         \end{subfigure}%
+%         \hspace{0.05\textwidth}
+%         % 第三张图
+%         \begin{subfigure}{0.3\textwidth}
+%             \centering
+%             \rule{\linewidth}{2.5cm} % 替换为图片
+%             \caption{Ground Truth}
+%         \end{subfigure}
+%     \end{figure}
+    
+%     \textbf{分析：} 可以看到我们的方法在光影细节（墨镜反射）上比 Baseline 更真实。
+% \end{frame}
 
 % ==================================================
 % Section 5: 问题与计划
 % ==================================================
-\section{问题与计划}
-\begin{frame}{当前问题与下周计划}
+\section{计划}
+\begin{frame}{下周计划}
     \begin{columns}[T]
-        \begin{column}{0.48\textwidth}
-            \setbeamercolor{block title}{bg=red!80!black,fg=white}
-            \begin{block}{遇到的困难 (Issues)}
-                \begin{enumerate}
-                    \item \textbf{OOM 报错：} 当 Batch Size 大于 32 时显存溢出。
-                    \item \textbf{数据脏乱：} 发现 LAION 数据集中有部分图片链接失效，导致 DataLoader 卡死。
-                \end{enumerate}
-            \end{block}
-        \end{column}
+        
         
         \begin{column}{0.48\textwidth}
             \setbeamercolor{block title}{bg=blue!80!black,fg=white}
             \begin{block}{下周计划 (Next Steps)}
                 \begin{enumerate}
-                    \item 尝试使用 \texttt{Gradient Checkpointing} 技术节省显存。
-                    \item 增加异常捕获代码，跳过失效图片。
-                    \item 跑完 COCO 数据集的对比实验。
+                    \item 继续阅读行人检索领域的论文
+                    \item 阅读这周所看部分论文作者开源的代码，尝试理解其中的代码实现
                 \end{enumerate}
             \end{block}
         \end{column}

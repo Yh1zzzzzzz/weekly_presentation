@@ -1,0 +1,17 @@
+
+# 或仅忽略特定类型的大文件
+figures/*.png
+figures/*.jpg
+figures/*.jpeg
+figures/*.bmp
+
+
+# 忽略临时文件
+/*.log
+/*.aux
+/*.out
+/*.nav
+/*.snm
+/*.toc
+.DS_Store
+EOF

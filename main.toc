@@ -1,5 +1,5 @@
 \beamer@sectionintoc {1}{核心摘要}{3}{0}{1}
-\beamer@sectionintoc {2}{文献阅读}{4}{0}{2}
-\beamer@sectionintoc {3}{方法与改进}{5}{0}{3}
-\beamer@sectionintoc {4}{实验结果}{6}{0}{4}
-\beamer@sectionintoc {5}{问题与计划}{7}{0}{5}
+\beamer@sectionintoc {2}{CLIP微调}{4}{0}{2}
+\beamer@sectionintoc {3}{IRRA}{13}{0}{3}
+\beamer@sectionintoc {4}{UFineBench}{17}{0}{4}
+\beamer@sectionintoc {5}{计划}{23}{0}{5}
